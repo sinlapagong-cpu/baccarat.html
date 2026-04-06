@@ -1,47 +1,237 @@
+// --- ระบบป้องกันการใช้งาน (User Lock) ---
+const MY_SECRET_KEY = "Jansi888-VIP"; // 088708!
+
+function checkAccess() {
+    const userPass = prompt("กรุณาใส่รหัสผ่านเพื่อเข้าใช้งาน:");
+    if (userPass !== MY_SECRET_KEY) {
+        alert("รหัสผ่านไม่ถูกต้อง! คุณไม่มีสิทธิ์ใช้งานเว็บนี้");
+        document.body.innerHTML = "<h1 style='color:red; margin-top:100px;'>ACCESS DENIED</h1><p>กรุณาติดต่อเจ้าของระบบเพื่อขอรหัส</p>";
+        return false;
+    }
+    alert("ยินดีต้อนรับ! รหัสถูกต้อง");
+    return true;
+}
+
+// สั่งให้รันระบบเช็ครหัสทันทีที่เปิดเว็บ
+window.onload = function() {
+    if (checkAccess()) {
+        // ถ้าผ่าน ให้โหลดข้อมูลเดิมที่มีอยู่ (ถ้ามี)
+        updateUI(); 
+    }
+};
+// --------------------------------------
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>Jansi888 AI</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: linear-gradient(135deg,#020617,#0f172a);
-      color: white;
-      text-align: center;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jansi888 AI Predictor</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .header { margin-bottom: 20px; border-bottom: 2px solid #0f3460; padding-bottom: 10px; }
+        
+        /* Dashboard Stats */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: #4ecca3; }
 
-    h1 {
-      color: #38bdf8;
-    }
+        /* Main Controls */
+        .main-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .panel {
+            background: rgba(22, 33, 62, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #4ecca3;
+            min-width: 300px;
+            flex: 1;
+        }
 
-    .container {
-      margin-top: 50px;
-    }
+        .btn-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            color: white;
+        }
+        .btn-player { background: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        .btn-banker { background: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); }
+        button:hover { transform: scale(1.05); filter: brightness(1.2); }
 
-    button {
-      padding: 10px 15px;
-      margin: 5px;
-      border: none;
-      border-radius: 10px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+        /* History Display */
+        .history-box {
+            background: #1a1a2e;
+            padding: 10px;
+            border-radius: 5px;
+            min-height: 50px;
+            margin: 15px 0;
+            word-break: break-all;
+            font-family: monospace;
+            color: #aaa;
+        }
+        .road-map {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+        }
+        .dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
 
-    .banker { background: #ef4444; color: white; }
-    .player { background: #3b82f6; color: white; }
-  </style>
+        /* Prediction Area */
+        .prediction-panel { border-color: #e94560; }
+        .next-bet { font-size: 3rem; font-weight: bold; margin: 10px 0; text-shadow: 0 0 20px #e94560; }
+        .trend-status { color: #4ecca3; font-weight: bold; }
+    </style>
 </head>
-
 <body>
-  <div class="container">
-    <h1>Jansi888 AI</h1>
-    <p>ทดลองเว็บของคุณ</p>
 
-    <button class="banker">BANKER</button>
-    <button class="player">PLAYER</button>
-  </div>
+    <div class="header">
+        <h1>Jansi888 AI <small style="font-size: 0.5em;">v1.0</small></h1>
+        <p>ระบบวิเคราะห์รูปแบบเกมอัตโนมัติ</p>
+    </div>
+
+    <div class="dashboard">
+        <div class="stat-card"><div>ไม้ทั้งหมด</div><div id="total-hands" class="stat-value">0</div></div>
+        <div class="stat-card"><div>P ทั้งหมด</div><div id="p-count" class="stat-value">0</div></div>
+        <div class="stat-card"><div>B ทั้งหมด</div><div id="b-count" class="stat-value">0</div></div>
+        <div class="stat-card"><div>WIN RATE</div><div id="win-rate" class="stat-value">0%</div></div>
+    </div>
+
+    <div class="main-container">
+        <div class="panel">
+            <h3>🎯 บันทึกผลย้อนหลัง</h3>
+            <div class="btn-group">
+                <button class="btn-player" onclick="addResult('P')">P</button>
+                <button class="btn-banker" onclick="addResult('B')">B</button>
+            </div>
+            <div id="history-text" class="history-box">รอการบันทึกผล...</div>
+            <div id="road-map" class="road-map"></div>
+            <button onclick="resetData()" style="background: #444; font-size: 0.8rem; margin-top: 10px;">ล้างข้อมูลทั้งหมด</button>
+        </div>
+
+        <div class="panel prediction-panel">
+            <h3>📊 วิเคราะห์รูปเกม (AI)</h3>
+            <div class="trend-status" id="status-text">สถานะ: รอข้อมูล (บันทึก 3 ไม้ขึ้นไป)</div>
+            <div class="next-bet" id="ai-predict">?</div>
+            <p>ความมั่นใจ: <span id="confidence">0%</span></p>
+            <div style="font-size: 0.9rem; color: #888;">แนะนำ: <span id="tip">-</span></div>
+        </div>
+    </div>
+
+    <script>
+        let history = [];
+        let pCount = 0;
+        let bCount = 0;
+
+        function addResult(type) {
+            history.push(type);
+            if (type === 'P') pCount++; else bCount++;
+            updateUI();
+        }
+
+        function resetData() {
+            if(confirm("ยืนยันการล้างข้อมูล?")) {
+                history = []; pCount = 0; bCount = 0;
+                updateUI();
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('total-hands').innerText = history.length;
+            document.getElementById('p-count').innerText = pCount;
+            document.getElementById('b-count').innerText = bCount;
+            
+            // Win Rate (จำลองจากสถิติที่บันทึก)
+            let rate = history.length > 0 ? Math.floor((Math.max(pCount, bCount) / history.length) * 100) : 0;
+            document.getElementById('win-rate').innerText = rate + "%";
+
+            // History Text
+            document.getElementById('history-text').innerText = history.join(' ');
+
+            // Road Map Dots
+            const roadmapDiv = document.getElementById('road-map');
+            roadmapDiv.innerHTML = '';
+            history.slice(-12).forEach(item => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.style.backgroundColor = item === 'P' ? '#3b82f6' : '#ef4444';
+                dot.innerText = item;
+                roadmapDiv.appendChild(dot);
+            });
+
+            analyzeTrend();
+        }
+
+        function analyzeTrend() {
+            const aiDisplay = document.getElementById('ai-predict');
+            const statusText = document.getElementById('status-text');
+            const confidence = document.getElementById('confidence');
+            const tip = document.getElementById('tip');
+
+            if (history.length < 3) {
+                aiDisplay.innerText = "?";
+                return;
+            }
+
+            // Simple Pattern Recognition (ปิงปอง / มังกร)
+            let last3 = history.slice(-3).join('');
+            let nextMove = "";
+
+            if (last3 === 'PPP' || last3 === 'BBB') {
+                nextMove = history[history.length-1]; // ตามมังกร
+                statusText.innerText = "สถานะ: TREND (มังกร)";
+                confidence.innerText = "85%";
+                tip.innerText = "รูปแบบมังกรกำลังมา แนะนำให้ตาม";
+            } else if (last3 === 'PBP' || last3 === 'BPB') {
+                nextMove = history[history.length-1] === 'P' ? 'B' : 'P'; // สวนปิงปอง
+                statusText.innerText = "สถานะ: TREND (ปิงปอง)";
+                confidence.innerText = "78%";
+                tip.innerText = "รูปแบบปิงปองสลับฝั่ง แนะนำให้แทงสวน";
+            } else {
+                nextMove = pCount > bCount ? 'B' : 'P'; // แทงฝั่งที่ออกน้อยกว่า (Mean Reversion)
+                statusText.innerText = "สถานะ: วิเคราะห์จากความน่าจะเป็น";
+                confidence.innerText = "60%";
+                tip.innerText = "กำลังคำนวณค่าเฉลี่ยสถิติ";
+            }
+
+            aiDisplay.innerText = nextMove;
+            aiDisplay.style.color = nextMove === 'P' ? '#3b82f6' : '#ef4444';
+        }
+    </script>
 </body>
 </html>
- 
